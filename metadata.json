@@ -1,0 +1,6 @@
+{
+  "name": "CPR Reading Library — Member Management & QR Verification",
+  "description": "Professional library member management, doctor registrations, printable membership cards, and secure QR code verification for CPR Reading Library, Chattogram.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
