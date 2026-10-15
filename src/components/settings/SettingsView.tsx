@@ -18,7 +18,20 @@ import {
   Server,
   Terminal,
   ExternalLink,
+  Building,
+  Phone,
+  MapPin,
+  CreditCard,
+  Receipt,
+  Save,
 } from 'lucide-react';
+import {
+  getLibraryConfig,
+  saveLibraryConfig,
+  resetLibraryConfig,
+  LibraryConfig,
+  DEFAULT_LIBRARY_CONFIG,
+} from '../../lib/constants';
 
 const SQL_MIGRATION_SCRIPT = `-- ==============================================================================
 -- CPR Reading Library — Chattogram, Bangladesh
@@ -225,11 +238,32 @@ export const SettingsView: React.FC = () => {
   const [copiedSql, setCopiedSql] = useState<boolean>(false);
   const [resetSuccess, setResetSuccess] = useState<boolean>(false);
 
+  // Official Library Address and Contact Config
+  const [libraryConfig, setLibraryConfig] = useState<LibraryConfig>(getLibraryConfig());
+  const [addressSaved, setAddressSaved] = useState<boolean>(false);
+
   useEffect(() => {
     const cfg = getSupabaseConfig();
     setSupabaseUrl(cfg.url);
     setAnonKey(cfg.anonKey);
+    setLibraryConfig(getLibraryConfig());
   }, []);
+
+  const handleSaveLibraryAddress = (e: React.FormEvent) => {
+    e.preventDefault();
+    saveLibraryConfig(libraryConfig);
+    setAddressSaved(true);
+    setTimeout(() => setAddressSaved(false), 3000);
+  };
+
+  const handleResetLibraryAddress = () => {
+    if (window.confirm('Reset address and phone numbers to official physical banner defaults?')) {
+      resetLibraryConfig();
+      setLibraryConfig(DEFAULT_LIBRARY_CONFIG);
+      setAddressSaved(true);
+      setTimeout(() => setAddressSaved(false), 3000);
+    }
+  };
 
   const handleSaveConfig = () => {
     saveSupabaseConfig({
@@ -299,6 +333,178 @@ export const SettingsView: React.FC = () => {
             <span>{isConfigured ? 'Supabase Configured' : 'Offline / Demo Store Active'}</span>
           </div>
         </div>
+      </div>
+
+      {/* Official Library Physical Address & Contact Configuration Card */}
+      <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-xs space-y-5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-slate-100 gap-2">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-lg bg-emerald-900 text-amber-300 flex items-center justify-center shrink-0">
+              <Building className="w-5 h-5 text-amber-300" />
+            </div>
+            <div>
+              <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                <span>Official Library Address & Contact Details</span>
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold">
+                  Active Everywhere
+                </span>
+              </h2>
+              <p className="text-xs text-slate-500">
+                Printed on Money Receipts (A4 dual vouchers), Membership ID Cards, Public QR verification, and Entrance Scanner.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 self-start sm:self-auto">
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-semibold bg-slate-100 text-slate-700 border border-slate-200">
+              <Receipt className="w-3.5 h-3.5 text-emerald-700" />
+              <span>Money Receipt & ID Card</span>
+            </span>
+          </div>
+        </div>
+
+        {addressSaved && (
+          <div className="p-3.5 rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-900 text-xs flex items-center gap-2 animate-in fade-in">
+            <CheckCircle2 className="w-4 h-4 text-emerald-700 shrink-0" />
+            <span className="font-semibold">
+              Library address and contact details saved successfully! All receipts and ID cards updated.
+            </span>
+          </div>
+        )}
+
+        {/* Current Active Banner Preview */}
+        <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
+          <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+            Physical Banner Details (Live Print Preview):
+          </div>
+          <div className="text-xs space-y-1 text-slate-800">
+            <div className="font-bold text-emerald-950 text-sm">{libraryConfig.name}</div>
+            <div className="font-medium">📍 {libraryConfig.addressBangla}</div>
+            <div className="text-[11px] text-slate-600">🏢 ({libraryConfig.addressDetailBangla})</div>
+            <div className="font-mono font-bold text-emerald-900 text-xs pt-1">
+              📞 মোবাইল / WhatsApp: {libraryConfig.phone1}, {libraryConfig.phone2}
+            </div>
+            <div className="font-mono text-[11px] text-slate-500">
+              ✉ Email: {libraryConfig.email}
+            </div>
+          </div>
+        </div>
+
+        <form onSubmit={handleSaveLibraryAddress} className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                Library Name
+              </label>
+              <input
+                type="text"
+                value={libraryConfig.name}
+                onChange={(e) => setLibraryConfig({ ...libraryConfig, name: e.target.value })}
+                className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-700/20 focus:border-emerald-700 font-medium"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                Short Name / Tagline
+              </label>
+              <input
+                type="text"
+                value={libraryConfig.tagline}
+                onChange={(e) => setLibraryConfig({ ...libraryConfig, tagline: e.target.value })}
+                className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-700/20 focus:border-emerald-700 text-xs"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 mb-1">
+              Official Address (Bangla - as per Physical Banner)
+            </label>
+            <input
+              type="text"
+              value={libraryConfig.addressBangla}
+              onChange={(e) => setLibraryConfig({ ...libraryConfig, addressBangla: e.target.value })}
+              placeholder="মতি টাওয়ার (৫ম তলা), গুলজার মোড়, চকবাজার, চট্টগ্রাম"
+              className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-700/20 focus:border-emerald-700 font-medium"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 mb-1">
+              Floor & Landmark Details (Bangla)
+            </label>
+            <input
+              type="text"
+              value={libraryConfig.addressDetailBangla}
+              onChange={(e) => setLibraryConfig({ ...libraryConfig, addressDetailBangla: e.target.value })}
+              placeholder="EBL ব্যাংকের ATM বুথের ডান পাশে লিফটের ৪ তলা"
+              className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-700/20 focus:border-emerald-700 text-xs"
+            />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                Primary Mobile / WhatsApp
+              </label>
+              <input
+                type="text"
+                value={libraryConfig.phone1}
+                onChange={(e) => setLibraryConfig({ ...libraryConfig, phone1: e.target.value, whatsapp: e.target.value })}
+                placeholder="01898-938981"
+                className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-700/20 focus:border-emerald-700 font-mono font-medium"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                Secondary Mobile Number
+              </label>
+              <input
+                type="text"
+                value={libraryConfig.phone2}
+                onChange={(e) => setLibraryConfig({ ...libraryConfig, phone2: e.target.value })}
+                placeholder="01898-938982"
+                className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-700/20 focus:border-emerald-700 font-mono font-medium"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                Official Email
+              </label>
+              <input
+                type="email"
+                value={libraryConfig.email}
+                onChange={(e) => setLibraryConfig({ ...libraryConfig, email: e.target.value })}
+                placeholder="cprmedicalacademy@gmail.com"
+                className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-700/20 focus:border-emerald-700 font-mono text-xs"
+              />
+            </div>
+          </div>
+
+          <div className="pt-2 flex flex-wrap items-center gap-3">
+            <button
+              type="submit"
+              className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-lg bg-emerald-900 text-amber-300 hover:bg-emerald-800 transition-colors shadow-xs"
+            >
+              <Save className="w-3.5 h-3.5" />
+              <span>Save Address & Phone Numbers</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={handleResetLibraryAddress}
+              className="px-3.5 py-2 text-xs font-medium rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 transition-colors"
+            >
+              Reset to Official Banner Defaults
+            </button>
+          </div>
+        </form>
       </div>
 
       {/* Supabase API Credentials Card */}

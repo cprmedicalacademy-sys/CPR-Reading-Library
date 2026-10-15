@@ -14,7 +14,10 @@ import {
   Hash,
   ArrowLeft,
   Building,
+  MapPin,
+  Phone,
 } from 'lucide-react';
+import { getLibraryConfig } from '../../lib/constants';
 
 interface PublicVerificationPageProps {
   memberId: string;
@@ -25,6 +28,7 @@ export const PublicVerificationPage: React.FC<PublicVerificationPageProps> = ({
   memberId,
   onGoHome,
 }) => {
+  const libraryConfig = getLibraryConfig();
   const [data, setData] = useState<PublicMemberVerification | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [notFound, setNotFound] = useState<boolean>(false);
@@ -60,15 +64,24 @@ export const PublicVerificationPage: React.FC<PublicVerificationPageProps> = ({
     <div className="min-h-screen bg-slate-100 flex flex-col justify-between py-8 px-4 sm:px-6">
       <div className="max-w-md w-full mx-auto space-y-4">
         {/* Top Header Card */}
-        <div className="text-center space-y-1">
+        <div className="text-center space-y-1.5">
           <div className="w-12 h-12 rounded-xl bg-emerald-950 text-amber-300 flex items-center justify-center mx-auto shadow-md border-2 border-emerald-800">
             <BookOpen className="w-6 h-6 text-amber-300" />
           </div>
           <h1 className="text-base sm:text-lg font-black text-slate-900 tracking-tight uppercase">
             CPR Reading Library
           </h1>
-          <p className="text-xs text-slate-500 font-medium">
-            Chattogram, Bangladesh · Official Membership Verification
+          <p className="text-[11px] text-emerald-900 font-bold uppercase tracking-wider">
+            {libraryConfig.tagline}
+          </p>
+          <p className="text-xs text-slate-700 font-medium">
+            {libraryConfig.addressBangla}
+          </p>
+          <p className="text-[11px] text-slate-500">
+            ({libraryConfig.addressDetailBangla})
+          </p>
+          <p className="text-xs font-mono font-bold text-emerald-950">
+            মোবাইল / WhatsApp: {libraryConfig.phone1}, {libraryConfig.phone2}
           </p>
         </div>
 
@@ -286,9 +299,49 @@ export const PublicVerificationPage: React.FC<PublicVerificationPageProps> = ({
           )}
         </div>
 
+        {/* Official Library Location & Contact Information */}
+        <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-200 text-center space-y-2">
+          <div className="flex items-center justify-center gap-1.5 text-xs font-bold text-slate-900">
+            <Building className="w-4 h-4 text-emerald-800" />
+            <span>CPR Reading Library — Chattogram</span>
+          </div>
+
+          <div className="text-[11.5px] text-slate-700 leading-tight">
+            <p className="font-medium">{libraryConfig.addressBangla}</p>
+            <p className="text-[10.5px] text-slate-500">({libraryConfig.addressDetailBangla})</p>
+          </div>
+
+          <div className="pt-1.5 border-t border-slate-100 flex flex-wrap items-center justify-center gap-3 text-xs">
+            <a
+              href={`tel:${libraryConfig.phone1}`}
+              className="inline-flex items-center gap-1 font-mono font-bold text-emerald-900 hover:text-emerald-700 transition-colors"
+            >
+              <Phone className="w-3.5 h-3.5 text-emerald-700" />
+              <span>{libraryConfig.phone1}</span>
+            </a>
+            <span className="text-slate-300">·</span>
+            <a
+              href={`tel:${libraryConfig.phone2}`}
+              className="inline-flex items-center gap-1 font-mono font-bold text-emerald-900 hover:text-emerald-700 transition-colors"
+            >
+              <Phone className="w-3.5 h-3.5 text-emerald-700" />
+              <span>{libraryConfig.phone2}</span>
+            </a>
+            <span className="text-slate-300">·</span>
+            <a
+              href={`https://wa.me/880${libraryConfig.phone1.replace(/[^0-9]/g, '').slice(-10)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[11px] font-semibold text-emerald-800 hover:underline"
+            >
+              WhatsApp
+            </a>
+          </div>
+        </div>
+
         {/* Footer info */}
-        <div className="text-center text-[11px] text-slate-500">
-          CPR Reading Library · Medical Division · Chattogram, Bangladesh
+        <div className="text-center text-[10.5px] text-slate-400">
+          CPR Reading Library · Doctors Study & Reference Facility · Chattogram, Bangladesh
         </div>
       </div>
     </div>

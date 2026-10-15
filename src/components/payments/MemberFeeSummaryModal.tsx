@@ -240,8 +240,10 @@ export const MemberFeeSummaryModal: React.FC<MemberFeeSummaryModalProps> = ({
           )}
 
           {/* Footer Note */}
-          <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-400">
-            <span>CPR Reading Library · Member Billing Ledger</span>
+          <div className="pt-3 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-2 text-[11px] text-slate-500">
+            <div className="text-center sm:text-left">
+              <span className="font-semibold text-slate-700">CPR Reading Library</span> · মতি টাওয়ার (৫ম তলা), চকবাজার · 📞 01898-938981, 01898-938982
+            </div>
             <button
               onClick={onClose}
               className="px-4 py-1.5 text-xs font-semibold rounded-lg text-slate-700 hover:bg-slate-100 border border-slate-200"

@@ -163,6 +163,10 @@ export const QrCodeModal: React.FC<QrCodeModalProps> = ({
               <span>Preview Public Page</span>
             </button>
           </div>
+
+          <div className="pt-2 border-t border-slate-100 text-center text-[10px] text-slate-400">
+            CPR Reading Library · মতি টাওয়ার (৫ম তলা), চকবাজার · 📞 01898-938981, 01898-938982
+          </div>
         </div>
       </div>
     </div>

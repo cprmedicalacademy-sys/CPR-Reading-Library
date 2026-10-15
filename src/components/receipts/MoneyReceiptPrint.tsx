@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Member, Payment } from '../../types';
 import { formatBdDate } from '../../lib/dateUtils';
 import { amountInWords, formatTaka } from '../../lib/numberWords';
 import { Printer, Download, X, Scissors, Check, Copy } from 'lucide-react';
+
+import { LIBRARY_CONFIG, getLibraryConfig, LibraryConfig } from '../../lib/constants';
 
 interface MoneyReceiptPrintProps {
   payment: Payment;
@@ -17,8 +19,15 @@ export const MoneyReceiptPrint: React.FC<MoneyReceiptPrintProps> = ({
   allMemberPayments = [],
   onClose,
 }) => {
+  const [libraryConfig, setLibraryConfig] = useState<LibraryConfig>(getLibraryConfig());
   const [printCopyMode, setPrintCopyMode] = useState<'both' | 'student' | 'office'>('both');
   const [copiedNo, setCopiedNo] = useState<boolean>(false);
+
+  useEffect(() => {
+    const handleUpdate = () => setLibraryConfig(getLibraryConfig());
+    window.addEventListener('cpr-library-config-updated', handleUpdate);
+    return () => window.removeEventListener('cpr-library-config-updated', handleUpdate);
+  }, []);
 
   // Financial calculations for this payment snapshot
   const monthlyFee = member.monthly_fee || 2000;
@@ -58,15 +67,24 @@ export const MoneyReceiptPrint: React.FC<MoneyReceiptPrintProps> = ({
     <div className="receipt-voucher bg-white text-black p-5 sm:p-6 border border-black rounded-none text-xs font-sans leading-tight relative">
       {/* Top Header */}
       <div className="flex items-start justify-between border-b-2 border-black pb-3">
-        <div>
-          <h1 className="text-base sm:text-lg font-black tracking-wider uppercase font-serif text-black">
+        <div className="max-w-[70%]">
+          <h1 className="text-base sm:text-lg font-black tracking-wider uppercase font-serif text-black leading-tight">
             CPR READING LIBRARY
           </h1>
-          <p className="text-[11px] font-medium tracking-tight text-black">
-            Medical Academy Building, Chattogram, Bangladesh
+          <p className="text-[10px] text-gray-800 font-serif italic mt-0.5">
+            Doctors Study & Reference Facility · Chattogram
           </p>
-          <p className="text-[10px] text-black">
-            Phone: +880 1819-000000 · Email: library@cprmedical.org
+          <p className="text-[11px] font-bold tracking-tight text-black mt-1">
+            {libraryConfig.addressBangla}
+          </p>
+          <p className="text-[10px] text-gray-900 font-medium">
+            ({libraryConfig.addressDetailBangla})
+          </p>
+          <p className="text-[10.5px] font-mono text-black mt-1 font-bold">
+            মোবাইল / WhatsApp: {libraryConfig.phone1}, {libraryConfig.phone2}
+          </p>
+          <p className="text-[9.5px] font-mono text-gray-700">
+            Email: {libraryConfig.email}
           </p>
         </div>
 
@@ -184,9 +202,18 @@ export const MoneyReceiptPrint: React.FC<MoneyReceiptPrintProps> = ({
           <div className="border-t border-black pt-1 font-medium">Member Signature</div>
         </div>
 
-        <div className="text-center">
-          <div className="text-[9px] italic text-gray-700 mb-2">
-            “Thank you for being a member of CPR Reading Library.”
+        <div className="text-center max-w-[280px]">
+          <div className="text-[8.5px] font-bold text-black uppercase tracking-wider">
+            CPR Reading Library
+          </div>
+          <div className="text-[8px] text-gray-800 leading-tight">
+            {libraryConfig.addressBangla}
+          </div>
+          <div className="text-[7.5px] text-gray-700">
+            ({libraryConfig.addressDetailBangla})
+          </div>
+          <div className="text-[8px] font-mono font-bold text-black mt-0.5">
+            মোবাইল: {libraryConfig.phone1}, {libraryConfig.phone2}
           </div>
         </div>
 

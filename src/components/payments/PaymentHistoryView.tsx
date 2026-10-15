@@ -119,6 +119,11 @@ export const PaymentHistoryView: React.FC<PaymentHistoryViewProps> = ({
           <p className="text-xs text-slate-500 mt-0.5">
             Complete transaction ledger of all doctor membership payments and official A4 dual-copy money receipts.
           </p>
+          <div className="flex flex-wrap items-center gap-2 text-[11px] text-slate-600 mt-1">
+            <span className="font-medium text-slate-800">CPR Reading Library · মতি টাওয়ার (৫ম তলা), চকবাজার</span>
+            <span className="text-slate-300">·</span>
+            <span className="font-mono font-bold text-emerald-900">মোবাইল: 01898-938981, 01898-938982</span>
+          </div>
         </div>
 
         <div className="flex items-center gap-2">

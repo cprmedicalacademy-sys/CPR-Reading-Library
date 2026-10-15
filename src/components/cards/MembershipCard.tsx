@@ -4,6 +4,8 @@ import { formatBdDate, calculateMembershipStatus } from '../../lib/dateUtils';
 import { generateQrDataUrl, getVerificationUrl } from '../../lib/qrUtils';
 import { BookOpen, Stethoscope, ShieldCheck } from 'lucide-react';
 
+import { LIBRARY_CONFIG, getLibraryConfig, LibraryConfig } from '../../lib/constants';
+
 interface MembershipCardProps {
   member: Member;
   side?: 'front' | 'back' | 'both';
@@ -15,9 +17,16 @@ export const MembershipCard: React.FC<MembershipCardProps> = ({
   side = 'front',
   printableOnly = false,
 }) => {
+  const [libraryConfig, setLibraryConfig] = useState<LibraryConfig>(getLibraryConfig());
   const [qrUrl, setQrUrl] = useState<string>('');
   const status = calculateMembershipStatus(member.expires_on, member.is_active);
   const verifyLink = getVerificationUrl(member.id);
+
+  useEffect(() => {
+    const handleUpdate = () => setLibraryConfig(getLibraryConfig());
+    window.addEventListener('cpr-library-config-updated', handleUpdate);
+    return () => window.removeEventListener('cpr-library-config-updated', handleUpdate);
+  }, []);
 
   useEffect(() => {
     generateQrDataUrl(verifyLink, {
@@ -47,8 +56,8 @@ export const MembershipCard: React.FC<MembershipCardProps> = ({
                 <div className="text-[12px] sm:text-[13px] font-black tracking-wide text-white uppercase leading-none font-sans">
                   CPR READING LIBRARY
                 </div>
-                <div className="text-[9px] text-amber-300 font-semibold tracking-wider uppercase mt-0.5">
-                  Chattogram · Medical Division
+                <div className="text-[8.5px] text-amber-300 font-semibold tracking-tight mt-0.5 truncate max-w-[170px] sm:max-w-[210px]">
+                  {libraryConfig.locationShort} · {libraryConfig.phone1}
                 </div>
               </div>
             </div>
@@ -143,16 +152,16 @@ export const MembershipCard: React.FC<MembershipCardProps> = ({
           </div>
 
           {/* Bottom Security Hologram Footer */}
-          <div className="bg-slate-100 px-3.5 py-1 border-t border-slate-200 flex items-center justify-between text-[9px] text-slate-600 font-mono">
-            <div className="flex items-center gap-1 text-emerald-900 font-semibold">
-              <ShieldCheck className="w-3 h-3 text-emerald-700" />
-              <span>OFFICIAL LIBRARY PASS</span>
+          <div className="bg-slate-100 px-3 py-1 border-t border-slate-200 flex items-center justify-between text-[8px] text-slate-600 font-mono">
+            <div className="flex items-center gap-1 text-emerald-950 font-semibold truncate max-w-[210px]">
+              <ShieldCheck className="w-3 h-3 text-emerald-700 shrink-0" />
+              <span className="truncate">Helpline: {libraryConfig.phoneDisplay}</span>
             </div>
 
-            <div className="flex items-center gap-2">
-              <span className="text-[8px] text-slate-500">STATUS:</span>
+            <div className="flex items-center gap-1.5 shrink-0">
+              <span className="text-[7.5px] text-slate-500">STATUS:</span>
               <span
-                className={`font-bold px-1.5 py-0.2 rounded text-[9px] ${
+                className={`font-bold px-1.5 py-0.2 rounded text-[8.5px] ${
                   status === 'ACTIVE'
                     ? 'bg-emerald-100 text-emerald-800'
                     : 'bg-amber-100 text-amber-800'
@@ -172,14 +181,14 @@ export const MembershipCard: React.FC<MembershipCardProps> = ({
           className="cpr-card relative w-[340px] h-[214px] sm:w-[380px] sm:h-[240px] rounded-xl bg-slate-50 text-slate-900 border border-slate-300 shadow-md overflow-hidden flex flex-col justify-between shrink-0 select-none print:shadow-none print:border-slate-400 print:w-[85.6mm] print:h-[53.98mm] print:rounded-lg print:break-inside-avoid"
         >
           {/* Magnetic Stripe Bar */}
-          <div className="w-full h-7 bg-slate-800 mt-3" />
+          <div className="w-full h-6 bg-slate-800 mt-2.5" />
 
           {/* Rules & Terms */}
-          <div className="px-4 py-1 text-[9px] text-slate-600 space-y-1">
-            <div className="font-bold text-[10px] text-slate-800 uppercase tracking-wide">
+          <div className="px-3.5 py-1 text-[8.5px] text-slate-600 space-y-0.5">
+            <div className="font-bold text-[9px] text-slate-800 uppercase tracking-wide">
               Terms of Use & Library Regulations
             </div>
-            <ul className="list-disc pl-3 space-y-0.5 text-[8.5px] leading-tight text-slate-600">
+            <ul className="list-disc pl-3 space-y-0.5 text-[8px] leading-tight text-slate-600">
               <li>This card is non-transferable and remains property of CPR Reading Library.</li>
               <li>Must be presented or scanned at the entrance desk before hall access.</li>
               <li>Report lost or damaged membership cards to the administration office immediately.</li>
@@ -188,18 +197,24 @@ export const MembershipCard: React.FC<MembershipCardProps> = ({
           </div>
 
           {/* Signature & Contact Footer */}
-          <div className="px-4 pb-2.5 pt-1 border-t border-slate-200 flex items-end justify-between text-[8px] text-slate-500">
-            <div>
-              <div className="font-bold text-slate-700">CPR Reading Library</div>
-              <div>Medical Academy Campus, Chattogram, Bangladesh</div>
-              <div>Helpline: +880 1819-000000 · library@cprreading.org</div>
+          <div className="px-3.5 pb-2 pt-1 border-t border-slate-200 flex items-end justify-between text-[7.5px] sm:text-[8px] text-slate-600">
+            <div className="max-w-[220px] leading-tight space-y-0.5">
+              <div className="font-bold text-slate-900 text-[8.5px]">CPR Reading Library</div>
+              <div className="font-medium text-slate-800 text-[8px] leading-tight">{libraryConfig.addressBangla}</div>
+              <div className="text-[7px] text-slate-600 leading-tight">({libraryConfig.addressDetailBangla})</div>
+              <div className="font-mono font-bold text-emerald-950 text-[7.5px] mt-0.5">
+                📞 {libraryConfig.phone1} (WhatsApp) · {libraryConfig.phone2}
+              </div>
+              <div className="text-[6.5px] font-mono text-slate-500">
+                Email: {libraryConfig.email}
+              </div>
             </div>
 
             <div className="text-center shrink-0">
-              <div className="w-24 border-b border-slate-400 pb-0.5 font-serif italic text-[9px] text-slate-700">
+              <div className="w-20 border-b border-slate-400 pb-0.5 font-serif italic text-[8.5px] text-slate-700">
                 Authorised Sign
               </div>
-              <div className="text-[7.5px] text-slate-400 uppercase tracking-wider mt-0.5">
+              <div className="text-[7px] text-slate-400 uppercase tracking-wider mt-0.5">
                 Chief Librarian
               </div>
             </div>

@@ -81,8 +81,14 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             Library Administrator Portal
           </h1>
           <p className="text-sm text-slate-600 mt-0.5">
-            Manage registered doctors, issue verified membership cards, and handle QR entrance validation.
+            Manage registered doctors, issue verified membership cards, track ৳2,000 monthly fees, and print money receipts.
           </p>
+          <div className="mt-2.5 pt-2 border-t border-slate-100 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-600">
+            <span className="font-medium text-slate-900">📍 মতি টাওয়ার (৫ম তলা), গুলজার মোড়, চকবাজার, চট্টগ্রাম</span>
+            <span className="text-[11px] text-slate-500">(EBL ব্যাংকের ATM বুথের ডান পাশে লিফটের ৪ তলা)</span>
+            <span className="text-slate-300">·</span>
+            <span className="font-mono font-bold text-emerald-900">📞 01898-938981, 01898-938982</span>
+          </div>
         </div>
 
         <div className="flex items-center gap-2 sm:self-center shrink-0">

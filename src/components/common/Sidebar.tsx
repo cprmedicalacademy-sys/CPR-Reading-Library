@@ -122,13 +122,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </div>
 
         {/* Location & Academic Footer */}
-        <div className="p-3 border-t border-slate-800/80 bg-slate-950/40 text-[11px] text-slate-400 space-y-2">
-          <div className="flex items-start gap-2 text-slate-400 px-1">
-            <Building2 className="w-3.5 h-3.5 mt-0.5 text-emerald-500 shrink-0" />
+        <div className="p-3 border-t border-slate-800/80 bg-slate-950/60 text-[10.5px] text-slate-400 space-y-1.5">
+          <div className="flex items-start gap-2 text-slate-300 px-1">
+            <Building2 className="w-3.5 h-3.5 mt-0.5 text-amber-400 shrink-0" />
             <div className="leading-tight">
-              <span className="font-medium text-slate-300 block">Medical Wing Facility</span>
-              <span className="text-[10px] text-slate-300">Doctors Study & Resource Center</span>
+              <span className="font-bold text-white block text-[11px]">CPR Reading Library</span>
+              <span className="text-[10px] text-slate-300 font-medium">মতি টাওয়ার (৫ম তলা), চকবাজার</span>
+              <span className="text-[9px] text-slate-400 block mt-0.5">EBL ব্যাংকের ATM বুথের ডান পাশে লিফট-৪</span>
             </div>
+          </div>
+          <div className="px-1 font-mono text-[9.5px] text-emerald-400 font-semibold">
+            📞 01898-938981, 01898-938982
           </div>
 
           {user && (

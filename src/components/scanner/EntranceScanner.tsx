@@ -95,6 +95,12 @@ export const EntranceScanner: React.FC<EntranceScannerProps> = ({
             <p className="text-xs text-slate-500 mt-0.5">
               Live gate check for doctors entering CPR Reading Library, Chattogram. Scan QR code or type Member ID.
             </p>
+            <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[11px] text-slate-600 mt-1.5 pt-1.5 border-t border-slate-100">
+              <span className="font-medium text-slate-800">মতি টাওয়ার (৫ম তলা), গুলজার মোড়, চকবাজার</span>
+              <span className="text-[10px] text-slate-500">(EBL ব্যাংকের ATM বুথের পাশে লিফট-৪)</span>
+              <span className="text-slate-300">·</span>
+              <span className="font-mono font-bold text-emerald-900">📞 01898-938981, 01898-938982</span>
+            </div>
           </div>
         </div>
       </div>

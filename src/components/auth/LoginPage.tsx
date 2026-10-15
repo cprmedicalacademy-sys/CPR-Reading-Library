@@ -46,15 +46,24 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onOpenPublicScanner }) => 
     <div className="min-h-screen bg-slate-100 flex flex-col justify-between py-12 px-4 sm:px-6">
       <div className="max-w-md w-full mx-auto space-y-6">
         {/* Brand Banner */}
-        <div className="text-center space-y-2">
+        <div className="text-center space-y-1.5">
           <div className="w-14 h-14 rounded-2xl bg-emerald-950 text-amber-300 flex items-center justify-center mx-auto shadow-md border-2 border-emerald-800">
             <BookOpen className="w-7 h-7 text-amber-300" />
           </div>
           <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight uppercase">
             CPR Reading Library
           </h1>
-          <p className="text-xs text-emerald-800 font-semibold tracking-wide uppercase">
-            Chattogram, Bangladesh · Member Administration
+          <p className="text-xs text-emerald-900 font-bold tracking-wide uppercase">
+            Doctors Study & Reference Facility
+          </p>
+          <p className="text-xs text-slate-700 font-medium">
+            মতি টাওয়ার (৫ম তলা), গুলজার মোড়, চকবাজার, চট্টগ্রাম
+          </p>
+          <p className="text-[11px] text-slate-500">
+            (EBL ব্যাংকের ATM বুথের ডান পাশে লিফটের ৪ তলা)
+          </p>
+          <p className="text-xs font-mono font-bold text-emerald-950">
+            মোবাইল / WhatsApp: 01898-938981, 01898-938982
           </p>
         </div>
 
@@ -173,8 +182,9 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onOpenPublicScanner }) => 
         )}
 
         {/* Footer */}
-        <div className="text-center text-[11px] text-slate-400">
-          CPR Reading Library · Medical Division · Chattogram, Bangladesh
+        <div className="text-center space-y-1 text-[11px] text-slate-500">
+          <p className="font-semibold text-slate-700">CPR Reading Library · মতি টাওয়ার (৫ম তলা), গুলজার মোড়, চকবাজার, চট্টগ্রাম</p>
+          <p className="text-[10px] text-slate-400">EBL ব্যাংকের ATM বুথের ডান পাশে লিফটের ৪ তলা · হেল্পলাইন: 01898-938981, 01898-938982</p>
         </div>
       </div>
     </div>

@@ -1,6 +1,7 @@
 import React from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { BookOpen, LogOut, QrCode, ShieldCheck, User } from 'lucide-react';
+import { BookOpen, LogOut, QrCode, ShieldCheck, User, Phone } from 'lucide-react';
+import { getLibraryConfig } from '../../lib/constants';
 
 interface HeaderProps {
   currentView: string;
@@ -10,6 +11,7 @@ interface HeaderProps {
 
 export const Header: React.FC<HeaderProps> = ({ currentView, onNavigate, onOpenScanner }) => {
   const { user, signOut, isSupabaseAuth } = useAuth();
+  const libraryConfig = getLibraryConfig();
 
   const getTitle = () => {
     switch (currentView) {
@@ -50,8 +52,10 @@ export const Header: React.FC<HeaderProps> = ({ currentView, onNavigate, onOpenS
           >
             <span>CPR Reading Library</span>
           </button>
-          <div className="text-[11px] text-slate-500 font-medium -mt-0.5 hidden sm:block">
-            Chattogram, Bangladesh <span className="text-slate-300">·</span> Member Portal
+          <div className="text-[11px] text-slate-500 font-medium -mt-0.5 hidden sm:flex items-center gap-1.5">
+            <span>{libraryConfig.locationShort}</span>
+            <span className="text-slate-300">·</span>
+            <span className="font-mono font-bold text-emerald-900">📞 {libraryConfig.phone1}</span>
           </div>
         </div>
       </div>
