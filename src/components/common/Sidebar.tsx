@@ -10,6 +10,7 @@ import {
   Settings,
   LogOut,
   Building2,
+  Receipt,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
@@ -34,6 +35,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'add_member', label: 'Add New Member', icon: UserPlus },
     { id: 'members', label: 'All Members', icon: Users },
+    { id: 'payments', label: 'Receipts & Fees', icon: Receipt },
     { id: 'cards', label: 'Membership Cards', icon: CreditCard },
     {
       id: 'expiring',

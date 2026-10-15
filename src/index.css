@@ -37,4 +37,23 @@
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
+
+  .receipt-voucher {
+    box-shadow: none !important;
+    border: 1px solid #000000 !important;
+    background-color: #ffffff !important;
+    color: #000000 !important;
+    page-break-inside: avoid;
+    break-inside: avoid;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .a4-sheet {
+    box-shadow: none !important;
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 auto !important;
+  }
 }
+

@@ -23,6 +23,8 @@ export const Header: React.FC<HeaderProps> = ({ currentView, onNavigate, onOpenS
         return 'Membership Cards';
       case 'expiring':
         return 'Expiring Memberships';
+      case 'payments':
+        return 'Money Receipts & Fees';
       case 'renewals':
         return 'Renewal Audit History';
       case 'scanner':

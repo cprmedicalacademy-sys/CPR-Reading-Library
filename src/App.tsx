@@ -11,9 +11,13 @@ import { MembershipCardView } from './components/cards/MembershipCardView';
 import { RenewalHistoryList } from './components/renewals/RenewalHistoryList';
 import { EntranceScanner } from './components/scanner/EntranceScanner';
 import { SettingsView } from './components/settings/SettingsView';
+import { PaymentHistoryView } from './components/payments/PaymentHistoryView';
+import { PaymentModal } from './components/payments/PaymentModal';
+import { MemberFeeSummaryModal } from './components/payments/MemberFeeSummaryModal';
+import { MoneyReceiptPrint } from './components/receipts/MoneyReceiptPrint';
 import { PublicVerificationPage } from './components/verification/PublicVerificationPage';
 import { LoginPage } from './components/auth/LoginPage';
-import { Member } from './types';
+import { Member, Payment } from './types';
 import { DataService } from './services/dataService';
 import { Menu, QrCode } from 'lucide-react';
 
@@ -36,6 +40,17 @@ function MainApp() {
   const [qrModalMember, setQrModalMember] = useState<Member | null>(null);
   const [selectedCardId, setSelectedCardId] = useState<string>('');
   const [searchParam, setSearchParam] = useState<string>('');
+
+  // Fee & Payment Modals state
+  const [feeSummaryMember, setFeeSummaryMember] = useState<Member | null>(null);
+  const [paymentTargetMember, setPaymentTargetMember] = useState<Member | null>(null);
+  const [paymentTargetTotalPayable, setPaymentTargetTotalPayable] = useState<number>(24000);
+  const [paymentTargetCurrentPaid, setPaymentTargetCurrentPaid] = useState<number>(0);
+
+  // Receipt Modal state
+  const [receiptPayment, setReceiptPayment] = useState<Payment | null>(null);
+  const [receiptMember, setReceiptMember] = useState<Member | null>(null);
+  const [allMemberPaymentsForReceipt, setAllMemberPaymentsForReceipt] = useState<Payment[]>([]);
 
   // 1. Initial URL routing check for Public Verification (/verify/UUID or ?verify=UUID)
   useEffect(() => {
@@ -107,13 +122,48 @@ function MainApp() {
     setCurrentView(view);
   };
 
+  // Open Payment Modal for a Member
+  const handleOpenRecordPayment = async (member: Member) => {
+    try {
+      const summary = await DataService.getMemberFeeSummary(member.id);
+      if (summary) {
+        setPaymentTargetTotalPayable(summary.total_payable);
+        setPaymentTargetCurrentPaid(summary.total_paid);
+      } else {
+        setPaymentTargetTotalPayable(member.total_payable || 24000);
+        setPaymentTargetCurrentPaid(0);
+      }
+      setPaymentTargetMember(member);
+    } catch (err) {
+      console.error(err);
+      setPaymentTargetMember(member);
+    }
+  };
+
+  // Open Receipt Print Modal for a Payment
+  const handleOpenReceipt = async (payment: Payment) => {
+    try {
+      let member = members.find((m) => m.id === payment.member_id) || null;
+      if (!member) {
+        member = await DataService.getMemberById(payment.member_id);
+      }
+      if (member) {
+        const memberPayments = await DataService.getPaymentsByMemberId(member.id);
+        setReceiptPayment(payment);
+        setReceiptMember(member);
+        setAllMemberPaymentsForReceipt(memberPayments);
+      }
+    } catch (err) {
+      console.error('Failed to open receipt:', err);
+    }
+  };
+
   // If visiting public verification route directly
   if (publicVerifyId) {
     return (
       <PublicVerificationPage
         memberId={publicVerifyId}
         onGoHome={() => {
-          // Reset URL and return to dashboard
           window.history.pushState({}, '', '/');
           setPublicVerifyId(null);
         }}
@@ -140,7 +190,6 @@ function MainApp() {
     return (
       <LoginPage
         onOpenPublicScanner={() => {
-          // Open public preview with the first active member
           const first = members[0];
           if (first) {
             setPublicVerifyId(first.id);
@@ -223,6 +272,18 @@ function MainApp() {
                 setCurrentView('cards');
               }}
               onViewQr={(m) => setQrModalMember(m)}
+              onViewFeeSummary={(m) => setFeeSummaryMember(m)}
+              onRecordPayment={(m) => handleOpenRecordPayment(m)}
+            />
+          )}
+
+          {currentView === 'payments' && (
+            <PaymentHistoryView
+              onPrintReceipt={(p) => handleOpenReceipt(p)}
+              onOpenMemberProfile={(memberId) => {
+                const found = members.find((m) => m.id === memberId);
+                if (found) setFeeSummaryMember(found);
+              }}
             />
           )}
 
@@ -243,6 +304,8 @@ function MainApp() {
                 setCurrentView('cards');
               }}
               onViewQr={(m) => setQrModalMember(m)}
+              onViewFeeSummary={(m) => setFeeSummaryMember(m)}
+              onRecordPayment={(m) => handleOpenRecordPayment(m)}
             />
           )}
 
@@ -281,8 +344,11 @@ function MainApp() {
           setIsMemberModalOpen(false);
           setEditingMember(null);
         }}
-        onSaved={() => {
+        onSaved={(savedMember, payment) => {
           refreshData();
+          if (payment) {
+            handleOpenReceipt(payment);
+          }
         }}
       />
 
@@ -305,6 +371,42 @@ function MainApp() {
           setPublicVerifyId(id);
         }}
       />
+
+      {/* Member Fee Summary & Breakdown Modal */}
+      <MemberFeeSummaryModal
+        isOpen={Boolean(feeSummaryMember)}
+        member={feeSummaryMember}
+        onClose={() => setFeeSummaryMember(null)}
+        onOpenRecordPayment={(m) => handleOpenRecordPayment(m)}
+        onViewReceipt={(p) => handleOpenReceipt(p)}
+      />
+
+      {/* Record Payment Modal */}
+      <PaymentModal
+        isOpen={Boolean(paymentTargetMember)}
+        member={paymentTargetMember}
+        totalPayable={paymentTargetTotalPayable}
+        currentPaid={paymentTargetCurrentPaid}
+        onClose={() => setPaymentTargetMember(null)}
+        onPaymentSuccess={(createdPayment) => {
+          refreshData();
+          handleOpenReceipt(createdPayment);
+        }}
+      />
+
+      {/* Printable Money Receipt Modal (A4 Black-and-White Dual Copy) */}
+      {receiptPayment && receiptMember && (
+        <MoneyReceiptPrint
+          payment={receiptPayment}
+          member={receiptMember}
+          allMemberPayments={allMemberPaymentsForReceipt}
+          onClose={() => {
+            setReceiptPayment(null);
+            setReceiptMember(null);
+            setAllMemberPaymentsForReceipt([]);
+          }}
+        />
+      )}
     </div>
   );
 }

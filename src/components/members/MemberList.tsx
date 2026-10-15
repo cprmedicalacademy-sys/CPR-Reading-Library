@@ -15,6 +15,8 @@ import {
   ChevronRight,
   Download,
   AlertTriangle,
+  Receipt,
+  PlusCircle,
 } from 'lucide-react';
 
 interface MemberListProps {
@@ -25,6 +27,8 @@ interface MemberListProps {
   onRenewMember: (member: Member) => void;
   onViewCard: (member: Member) => void;
   onViewQr: (member: Member) => void;
+  onViewFeeSummary: (member: Member) => void;
+  onRecordPayment: (member: Member) => void;
 }
 
 export const MemberList: React.FC<MemberListProps> = ({
@@ -35,6 +39,8 @@ export const MemberList: React.FC<MemberListProps> = ({
   onRenewMember,
   onViewCard,
   onViewQr,
+  onViewFeeSummary,
+  onRecordPayment,
 }) => {
   const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -354,6 +360,20 @@ export const MemberList: React.FC<MemberListProps> = ({
                       {/* Actions */}
                       <td className="py-3 px-4 text-right">
                         <div className="flex items-center justify-end gap-1">
+                          <button
+                            onClick={() => onViewFeeSummary(member)}
+                            title="View Fee Summary & Receipts"
+                            className="p-1.5 text-slate-500 hover:text-emerald-900 hover:bg-emerald-50 rounded-md transition-colors"
+                          >
+                            <Receipt className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            onClick={() => onRecordPayment(member)}
+                            title="Receive Membership Fee Payment"
+                            className="p-1.5 text-slate-500 hover:text-emerald-900 hover:bg-emerald-50 rounded-md transition-colors"
+                          >
+                            <PlusCircle className="w-3.5 h-3.5" />
+                          </button>
                           <button
                             onClick={() => onViewCard(member)}
                             title="View Printable Card"

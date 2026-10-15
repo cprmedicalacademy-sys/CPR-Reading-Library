@@ -22,10 +22,10 @@ import {
 
 const SQL_MIGRATION_SCRIPT = `-- ==============================================================================
 -- CPR Reading Library — Chattogram, Bangladesh
--- Member Management & QR Verification Database Schema & RLS Policies
+-- Member Management, Fee Management & Money Receipt Database Schema & RLS
 -- ==============================================================================
 
--- 1. Enable UUID Extension
+-- 1. Enable UUID Extensions
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
@@ -41,6 +41,14 @@ CREATE TABLE IF NOT EXISTS public.members (
     expires_on DATE NOT NULL,
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
     notes TEXT,                        -- Internal notes (Private)
+
+    -- Fee Management Fields (Private)
+    monthly_fee NUMERIC NOT NULL DEFAULT 2000,
+    membership_months INTEGER NOT NULL DEFAULT 12,
+    total_payable NUMERIC NOT NULL DEFAULT 24000,
+    membership_start_date DATE DEFAULT CURRENT_DATE,
+    membership_end_date DATE,
+
     created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now()),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now())
 );
@@ -56,14 +64,33 @@ CREATE TABLE IF NOT EXISTS public.membership_renewals (
     renewed_by_email TEXT
 );
 
--- 4. Create Indexes
+-- 4. Create Payments & Money Receipts Table
+CREATE TABLE IF NOT EXISTS public.payments (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    receipt_no TEXT NOT NULL UNIQUE,
+    member_id UUID NOT NULL REFERENCES public.members(id) ON DELETE CASCADE,
+    amount NUMERIC NOT NULL CHECK (amount > 0),
+    payment_date DATE NOT NULL DEFAULT CURRENT_DATE,
+    payment_method TEXT NOT NULL DEFAULT 'Cash', -- Cash, Bank, Mobile Banking, Other
+    transaction_reference TEXT,
+    notes TEXT,
+    recorded_by UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+    recorded_by_email TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now())
+);
+
+-- 5. Create Indexes for Search Performance
 CREATE INDEX IF NOT EXISTS idx_members_member_no ON public.members (member_no);
 CREATE INDEX IF NOT EXISTS idx_members_bmdc_no ON public.members (bmdc_no);
 CREATE INDEX IF NOT EXISTS idx_members_phone ON public.members (phone);
 CREATE INDEX IF NOT EXISTS idx_members_expires_on ON public.members (expires_on);
+CREATE INDEX IF NOT EXISTS idx_members_is_active ON public.members (is_active);
 CREATE INDEX IF NOT EXISTS idx_renewals_member_id ON public.membership_renewals (member_id);
+CREATE INDEX IF NOT EXISTS idx_payments_receipt_no ON public.payments (receipt_no);
+CREATE INDEX IF NOT EXISTS idx_payments_member_id ON public.payments (member_id);
+CREATE INDEX IF NOT EXISTS idx_payments_date ON public.payments (payment_date);
 
--- 5. Updated At Trigger
+-- 6. Updated At Trigger
 CREATE OR REPLACE FUNCTION public.handle_updated_at()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -78,7 +105,7 @@ CREATE TRIGGER set_members_updated_at
     FOR EACH ROW
     EXECUTE FUNCTION public.handle_updated_at();
 
--- 6. Helper: Next Member Number Generator (CPR-0001)
+-- 7. Helper: Next Member Number Generator (CPR-0001)
 CREATE OR REPLACE FUNCTION public.get_next_member_no()
 RETURNS TEXT AS $$
 DECLARE
@@ -98,8 +125,27 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- 7. Public Secure Verification RPC Function
--- Exposes ONLY public verification data. NEVER exposes phone, bmdc_no, or notes.
+-- 8. Helper: Next Receipt Number Generator (CPR-RCP-000001)
+CREATE OR REPLACE FUNCTION public.get_next_receipt_no()
+RETURNS TEXT AS $$
+DECLARE
+    next_num INTEGER;
+BEGIN
+    SELECT COALESCE(
+        MAX(
+            CASE 
+                WHEN receipt_no ~ '^CPR-RCP-[0-9]+$' 
+                THEN SUBSTRING(receipt_no FROM 9)::INTEGER 
+                ELSE 0 
+            END
+        ), 0
+    ) + 1 INTO next_num FROM public.payments;
+    
+    RETURN 'CPR-RCP-' || LPAD(next_num::TEXT, 6, '0');
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- 9. Secure Public Verification Function (Zero financial/private data exposure)
 CREATE OR REPLACE FUNCTION public.get_public_member_verification(member_uuid UUID)
 RETURNS TABLE (
     id UUID,
@@ -148,21 +194,25 @@ $$;
 
 GRANT EXECUTE ON FUNCTION public.get_public_member_verification(UUID) TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.get_next_member_no() TO authenticated;
+GRANT EXECUTE ON FUNCTION public.get_next_receipt_no() TO authenticated;
 
--- 8. Row Level Security (RLS)
+-- 10. Row Level Security (RLS) Configuration
 ALTER TABLE public.members ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.membership_renewals ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.payments ENABLE ROW LEVEL SECURITY;
 
--- Admins full access
 CREATE POLICY "Admins have full access to members"
     ON public.members FOR ALL TO authenticated USING (true) WITH CHECK (true);
 
 CREATE POLICY "Admins have full access to renewals"
     ON public.membership_renewals FOR ALL TO authenticated USING (true) WITH CHECK (true);
 
--- Revoke direct anon table access (zero data leakage)
+CREATE POLICY "Admins have full access to payments"
+    ON public.payments FOR ALL TO authenticated USING (true) WITH CHECK (true);
+
 REVOKE ALL ON public.members FROM anon;
-REVOKE ALL ON public.membership_renewals FROM anon;`;
+REVOKE ALL ON public.membership_renewals FROM anon;
+REVOKE ALL ON public.payments FROM anon;`;
 
 export const SettingsView: React.FC = () => {
   const [supabaseUrl, setSupabaseUrl] = useState<string>('');

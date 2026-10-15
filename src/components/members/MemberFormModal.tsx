@@ -1,14 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import { Member } from '../../types';
+import { Member, Payment } from '../../types';
 import { DataService } from '../../services/dataService';
 import { addMonthsToDate, getTodayIsoDate } from '../../lib/dateUtils';
-import { X, Save, Upload, User, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { X, Save, Upload, User, AlertCircle, CheckCircle2, Receipt } from 'lucide-react';
 
 interface MemberFormModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSaved: (member: Member) => void;
-  initialMember?: Member | null; // If provided, edit mode; otherwise, create mode
+  onSaved: (member: Member, payment?: Payment) => void;
+  initialMember?: Member | null;
 }
 
 export const MemberFormModal: React.FC<MemberFormModalProps> = ({
@@ -29,9 +29,23 @@ export const MemberFormModal: React.FC<MemberFormModalProps> = ({
   const [photoUrl, setPhotoUrl] = useState<string>('');
   const [notes, setNotes] = useState<string>('');
 
+  // Fee & Payment Details
+  const [monthlyFee, setMonthlyFee] = useState<number>(2000);
+  const [durationMonths, setDurationMonths] = useState<number>(12);
+  const [initialPaymentAmount, setInitialPaymentAmount] = useState<string>('2000');
+  const [paymentDate, setPaymentDate] = useState<string>(getTodayIsoDate());
+  const [paymentMethod, setPaymentMethod] = useState<'Cash' | 'Bank' | 'Mobile Banking' | 'Other'>('Cash');
+  const [paymentReference, setPaymentReference] = useState<string>('');
+
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>('');
   const [successMsg, setSuccessMsg] = useState<string>('');
+
+  // Live Calculations
+  const calculatedTotalPayable = monthlyFee * durationMonths;
+  const numericInitialPaid = parseFloat(initialPaymentAmount) || 0;
+  const calculatedRemainingDue = Math.max(0, calculatedTotalPayable - numericInitialPaid);
+
 
   useEffect(() => {
     if (isOpen) {
@@ -48,6 +62,9 @@ export const MemberFormModal: React.FC<MemberFormModalProps> = ({
         setIsActive(initialMember.is_active);
         setPhotoUrl(initialMember.photo_url || '');
         setNotes(initialMember.notes || '');
+        setMonthlyFee(initialMember.monthly_fee || 2000);
+        setDurationMonths(initialMember.membership_months || 12);
+        setInitialPaymentAmount('0');
       } else {
         // Create mode: fetch next available ID
         setFullName('');
@@ -58,6 +75,12 @@ export const MemberFormModal: React.FC<MemberFormModalProps> = ({
         setIsActive(true);
         setPhotoUrl('');
         setNotes('');
+        setMonthlyFee(2000);
+        setDurationMonths(12);
+        setInitialPaymentAmount('2000');
+        setPaymentDate(getTodayIsoDate());
+        setPaymentMethod('Cash');
+        setPaymentReference('');
 
         DataService.getNextMemberId().then((nextId) => {
           setMemberNo(nextId);
@@ -84,6 +107,7 @@ export const MemberFormModal: React.FC<MemberFormModalProps> = ({
   };
 
   const handleQuickDuration = (months: number) => {
+    setDurationMonths(months);
     setExpiresOn(addMonthsToDate(months, joinedOn));
   };
 
@@ -92,7 +116,7 @@ export const MemberFormModal: React.FC<MemberFormModalProps> = ({
     setError('');
 
     if (!fullName.trim()) {
-      setError('Doctor\'s full name is required (e.g. Dr. Mohammad Rafiq).');
+      setError("Doctor's full name is required (e.g. Dr. Mohammad Rafiq).");
       return;
     }
     if (!memberNo.trim()) {
@@ -118,6 +142,9 @@ export const MemberFormModal: React.FC<MemberFormModalProps> = ({
           is_active: isActive,
           photo_url: photoUrl,
           notes,
+          monthly_fee: monthlyFee,
+          membership_months: durationMonths,
+          total_payable: calculatedTotalPayable,
         });
 
         if (!res.success || !res.data) {
@@ -142,6 +169,12 @@ export const MemberFormModal: React.FC<MemberFormModalProps> = ({
           is_active: isActive,
           photo_url: photoUrl,
           notes,
+          monthly_fee: monthlyFee,
+          membership_months: durationMonths,
+          total_payable: calculatedTotalPayable,
+          initial_payment_amount: numericInitialPaid > 0 ? numericInitialPaid : undefined,
+          initial_payment_method: paymentMethod,
+          initial_payment_reference: paymentReference,
         });
 
         if (!res.success || !res.data) {
@@ -150,11 +183,15 @@ export const MemberFormModal: React.FC<MemberFormModalProps> = ({
           return;
         }
 
-        setSuccessMsg(`Doctor registered successfully with Member ID ${res.data.member_no}!`);
+        setSuccessMsg(
+          `Doctor registered successfully with Member ID ${res.data.member_no}!${
+            res.payment ? ' Money receipt generated.' : ''
+          }`
+        );
         setTimeout(() => {
-          onSaved(res.data!);
+          onSaved(res.data!, res.payment);
           onClose();
-        }, 600);
+        }, 700);
       }
     } catch (err: any) {
       setError(err?.message || 'An unexpected error occurred while saving.');
@@ -393,6 +430,126 @@ export const MemberFormModal: React.FC<MemberFormModalProps> = ({
                 </div>
               </div>
             </div>
+          </div>
+
+          {/* Fee & Payment Details Section */}
+          <div className="pt-3 border-t border-slate-200 space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
+                <Receipt className="w-4 h-4 text-emerald-800" />
+                <span>Membership Fee & Payment Details</span>
+              </h3>
+              <span className="text-[10px] text-slate-500 font-medium">
+                Standard: ৳2,000 / month
+              </span>
+            </div>
+
+            {/* Calculations Banner */}
+            <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+              <div>
+                <span className="text-[10px] text-slate-500 uppercase font-semibold block">Monthly Fee</span>
+                <span className="font-mono font-bold text-slate-800">৳{monthlyFee.toLocaleString()}</span>
+              </div>
+              <div>
+                <span className="text-[10px] text-slate-500 uppercase font-semibold block">Duration</span>
+                <span className="font-mono font-bold text-slate-800">{durationMonths} Months</span>
+              </div>
+              <div>
+                <span className="text-[10px] text-slate-500 uppercase font-semibold block">Total Payable</span>
+                <span className="font-mono font-bold text-slate-900">৳{calculatedTotalPayable.toLocaleString()}</span>
+              </div>
+              <div>
+                <span className="text-[10px] text-amber-800 uppercase font-semibold block">Remaining Due</span>
+                <span className="font-mono font-bold text-amber-900">৳{calculatedRemainingDue.toLocaleString()}</span>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Monthly Fee (BDT)
+                </label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 font-bold">৳</span>
+                  <input
+                    type="number"
+                    value={monthlyFee}
+                    onChange={(e) => setMonthlyFee(Math.max(0, parseInt(e.target.value) || 0))}
+                    className="w-full pl-7 pr-3 py-2 text-xs rounded-lg border border-slate-300 font-mono font-medium focus:outline-none focus:ring-2 focus:ring-emerald-700/20"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Duration (Months)
+                </label>
+                <input
+                  type="number"
+                  min="1"
+                  max="60"
+                  value={durationMonths}
+                  onChange={(e) => {
+                    const m = Math.max(1, parseInt(e.target.value) || 1);
+                    setDurationMonths(m);
+                    setExpiresOn(addMonthsToDate(m, joinedOn));
+                  }}
+                  className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 font-mono font-medium focus:outline-none focus:ring-2 focus:ring-emerald-700/20"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Initial Payment Received
+                </label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 font-bold">৳</span>
+                  <input
+                    type="number"
+                    min="0"
+                    step="100"
+                    value={initialPaymentAmount}
+                    onChange={(e) => setInitialPaymentAmount(e.target.value)}
+                    placeholder="2000"
+                    className="w-full pl-7 pr-3 py-2 text-xs rounded-lg border border-slate-300 font-mono font-bold text-emerald-950 focus:outline-none focus:ring-2 focus:ring-emerald-700/20"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Payment Details if initial payment > 0 */}
+            {numericInitialPaid > 0 && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    Initial Payment Method
+                  </label>
+                  <select
+                    value={paymentMethod}
+                    onChange={(e) => setPaymentMethod(e.target.value as any)}
+                    className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 font-medium focus:outline-none focus:ring-2 focus:ring-emerald-700/20"
+                  >
+                    <option value="Cash">Cash Counter</option>
+                    <option value="Mobile Banking">Mobile Banking (bKash / Nagad / Rocket)</option>
+                    <option value="Bank">Bank Deposit / Transfer</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    Transaction Reference (Optional)
+                  </label>
+                  <input
+                    type="text"
+                    value={paymentReference}
+                    onChange={(e) => setPaymentReference(e.target.value)}
+                    placeholder="e.g. bKash TrxID, Bank slip no, Desk receipt"
+                    className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 font-mono focus:outline-none focus:ring-2 focus:ring-emerald-700/20"
+                  />
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Internal Notes (Private) */}

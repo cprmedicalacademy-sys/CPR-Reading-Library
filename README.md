@@ -54,6 +54,24 @@ A complete, production-grade web application built for **CPR Reading Library, Ch
 8. **Entrance Desk Verifier**:
    - Reception staff can scan with a barcode/QR reader, paste a link, or type a Member ID for instantaneous gate clearance.
 
+9. **Membership Fee Management**:
+   - Monthly membership fee fixed at **৳2,000 / month**.
+   - Automatic calculations on registration:
+     - Total Payable = Monthly Fee × Duration Months (e.g. ৳2,000 × 6 = ৳12,000)
+     - Total Paid = Sum of all confirmed payments
+     - Remaining Due = Total Payable − Total Paid
+   - Accidental overpayment detection and warning safeguards.
+   - Member profile fee summary drawer with payment history and real-time dues tracking.
+
+10. **Printable Money Receipts (A4 Dual Copy — Black & White)**:
+    - Pure white background, crisp black text and borders, zero ink waste.
+    - Two identical copies on a single A4 page:
+      - Top copy: **STUDENT'S COPY**
+      - Bottom copy: **OFFICE COPY**
+      - Clear dashed cutting line between the two vouchers (`✂ CUT HERE · FOLD OR DETACH`).
+    - Contains: Receipt No. (sequential `CPR-RCP-000001`), payment date, received from, Member ID, receipt for, monthly fee (৳2,000), membership period (From/To), total payable, previous paid, current payment received, total paid after this payment, remaining due amount, payment method (Cash, Bank, Mobile Banking, Other), transaction reference, amount in words ("Five Thousand Taka Only"), authorized signature line, and member signature line.
+    - Actions: Print Both Copies (A4 default), Print Student's Copy, Print Office Copy, Save as PDF.
+
 ---
 
 ## Database Architecture (Supabase PostgreSQL)
@@ -72,9 +90,26 @@ Full migration file: `supabase/migrations/20261015000000_init_cpr_library.sql`
    - `expires_on`: DATE NOT NULL
    - `is_active`: BOOLEAN NOT NULL DEFAULT true
    - `notes`: TEXT NULL (Private admin remarks)
+   - `monthly_fee`: NUMERIC NOT NULL DEFAULT 2000
+   - `membership_months`: INTEGER NOT NULL DEFAULT 12
+   - `total_payable`: NUMERIC NOT NULL DEFAULT 24000
+   - `membership_start_date`, `membership_end_date`: DATE
    - `created_at`, `updated_at`: TIMESTAMPTZ
 
-2. **`membership_renewals`**:
+2. **`payments`**:
+   - `id`: UUID (Primary Key)
+   - `receipt_no`: TEXT NOT NULL UNIQUE (e.g. `CPR-RCP-000001`)
+   - `member_id`: UUID REFERENCES `members(id)` ON DELETE CASCADE
+   - `amount`: NUMERIC NOT NULL CHECK (amount > 0)
+   - `payment_date`: DATE NOT NULL DEFAULT CURRENT_DATE
+   - `payment_method`: TEXT ('Cash', 'Bank', 'Mobile Banking', 'Other')
+   - `transaction_reference`: TEXT NULL
+   - `notes`: TEXT NULL
+   - `recorded_by`: UUID REFERENCES auth.users(id)
+   - `recorded_by_email`: TEXT
+   - `created_at`: TIMESTAMPTZ
+
+3. **`membership_renewals`**:
    - `id`: UUID (Primary Key)
    - `member_id`: UUID REFERENCES `members(id)` ON DELETE CASCADE
    - `previous_expiry_date`: DATE NOT NULL
